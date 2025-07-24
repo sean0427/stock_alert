@@ -1,0 +1,34 @@
+name: Stock Alert
+
+on:
+  schedule:
+    - cron: '30 14 * * 1-5'
+    - cron: '0,30 15-20 * * 1-5'
+    - cron: '0 21 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Comma separated tickers, e.g. AAPL:NASDAQ,GOOG:NASDAQ'
+        required: true
+      threshold:
+        description: 'Drop percentage threshold'
+        required: true
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: supplypike/setup-uv@v1
+      - run: uv pip install -r requirements.txt
+      - run: python check_google_finance.py --tickers "$TICKERS" --threshold "$THRESHOLD"
+        env:
+          TICKERS: ${{ github.event.inputs.tickers || env.TICKERS }}
+          THRESHOLD: ${{ github.event.inputs.threshold || env.THRESHOLD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+
